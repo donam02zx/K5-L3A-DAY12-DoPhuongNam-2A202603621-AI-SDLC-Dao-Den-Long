@@ -1,13 +1,16 @@
 {
   "name": "dao-den-long",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Dao Den Long - 3D third-person game (AI SDLC lab)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test \"tests/**/*.test.js\"",
-    "headless": "node src/headless/cli.js"
+    "headless": "node src/headless/cli.js",
+    "start": "node scripts/serve.mjs",
+    "bench": "node scripts/bench.mjs --seed 42 --duration 30 --out bench.json",
+    "soak": "node --expose-gc scripts/soak.mjs --seed 7 --nights 10 --out soak.json"
   },
   "repository": {
     "type": "git",

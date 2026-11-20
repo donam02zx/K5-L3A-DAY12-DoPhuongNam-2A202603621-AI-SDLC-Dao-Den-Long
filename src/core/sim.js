@@ -38,7 +38,8 @@ export const capacity = (s) => Math.min(s.T.capacity_max, s.T.carry_capacity + S
 export const winNeed = (s) => Math.ceil(s.T.win_ratio * s.lanterns.length - 1e-9);
 const protects = (s, L) => L.lit && L.fuel >= lowFuel(s.T); // lit and fuel >= 30 keeps the safe zone
 
-export function createSim({ seed = 1, night = 1, scenario = null, tuning = TUNING } = {}) {
+export function createSim({ seed = 1, night = 1, scenario = null, tuning = TUNING, bench = false } = {}) {
+  if (bench) return createBenchSim(seed, tuning);
   const T = tuning, map = NIGHTS[night], sc = scenario ?? {};
   const s = {
     T, map, night, rng: makeRng(seed), tick: 0, simTick: 0, paused: false, state: 'playing', result: null, score: 0,
@@ -110,6 +111,23 @@ export function createSim({ seed = 1, night = 1, scenario = null, tuning = TUNIN
       return { id: c.id, pos: [...(c.pos ?? def?.pos ?? [0, 0, 0])], available: c.available ?? respawn === 0, respawn };
     });
   }
+  return s;
+}
+
+/**
+ * Ticket-04 benchmark scene (render benchmark only — never used by the headless contract):
+ * Night 1, 200 wandering shades + 100 motes spread uniformly on the island (seeded), L1-L3 lit with fuel 100,
+ * player idle at the origin. Spawning, damage, pickup, fuel decay and night end are disabled (s.bench).
+ */
+export function createBenchSim(seed = 42, tuning = TUNING) {
+  const s = createSim({ seed, night: 1, tuning, scenario: {
+    random_motes: false, random_shades: false, random_drifters: false, wind_enabled: false, motes: [], shades: [], drifters: [],
+    lanterns: ['L1', 'L2', 'L3'].map((id) => ({ id, lit: true, fuel: tuning.fuel_max })),
+  } });
+  s.bench = true;
+  const disc = () => { const a = s.rng() * 2 * Math.PI, r = Math.sqrt(s.rng()) * 38; return [r * Math.cos(a), 0, r * Math.sin(a)]; };
+  for (let i = 0; i < 200; i++) s.shades.push(newShade(`S${s.nextShade++}`, disc(), 'wander', 0));
+  for (let i = 0; i < 100; i++) addMote(s, disc(), 'random');
   return s;
 }
 
@@ -205,7 +223,7 @@ export function step(s, input) {
   if (s.wind.active && --s.wind.left === 0) s.wind.active = false;
   // 2b. lantern fuel: decay 1/s + 5/s per draining shade; then lanterns at fuel <= 0 go out
   for (const L of s.lanterns) {
-    if (!L.lit) continue;
+    if (!L.lit || s.bench) continue;
     L.fuel -= Math.round((T.fuel_decay_per_s * FU) / TICK_RATE);
     for (const sh of s.shades) {
       if (sh.state !== 'drain' || sh.lantern !== L) continue;
@@ -282,7 +300,7 @@ export function step(s, input) {
   const canInteract = p.fallWait === 0;
 
   // 4. pick up motes and charms
-  if (canInteract) {
+  if (canInteract && !s.bench) {
     for (let i = 0; i < s.motes.length && p.carried < capacity(s); i++) {
       const mo = s.motes[i];
       if (dXZ(p.pos, mo.pos) <= T.pickup_radius + EPS && Math.abs(p.pos[1] - mo.pos[1]) <= S.pickup_height + EPS) {
@@ -436,7 +454,7 @@ export function step(s, input) {
   }
 
   // 9. touches: drifters steal first, then shades hit (ascending id)
-  if (p.fallWait === 0) {
+  if (p.fallWait === 0 && !s.bench) {
     for (const d of [...s.drifters].sort(byId)) {
       if (d.state !== 'chase' || dXZ(d.pos, p.pos) > S.drifter_touch_m + EPS) continue;
       const amount = Math.min(S.drifter_steal, p.carried);
@@ -485,6 +503,7 @@ export function step(s, input) {
 
   // 11. win / lose
   let over = null;
+  if (s.bench) return events; // benchmark scene: the night never ends
   if (p.flames <= 0) over = { result: 'lost', reason: 'no_flames' };
   else if (s.timeLeftTicks <= 0) {
     const litNow = s.lanterns.filter((L) => L.lit).length;

@@ -25,7 +25,7 @@ const OTHERS_LIT = lit(['L2', 'L3', 'L4', 'L5']);
 
 test('A: game.contract.json v1.2 tuning matches the standard numbers', () => {
   const c = JSON.parse(readFileSync('game.contract.json', 'utf8'));
-  assert.equal(c.contract_version, '1.2');
+  assert.equal(c.contract_version, '1.3'); // v1.3 (Ticket-04) keeps every v1.2 rule; only adds bench_cmd/soak_cmd
   assert.deepEqual(c.tuning, T);
   assert.deepEqual(
     [c.tuning.player_speed, c.tuning.carry_capacity, c.tuning.lantern_cost, c.tuning.pickup_radius, c.tuning.interact_radius,
