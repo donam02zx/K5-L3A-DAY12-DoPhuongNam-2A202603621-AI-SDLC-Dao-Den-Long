@@ -270,7 +270,9 @@ function endNight(result) {
   (won ? sfx.win : sfx.lose)();
   if (won && night === 3) { $('dawn-score').textContent = `Tổng điểm: ${totalScore}`; show('dawn'); mode = 'dawn'; return; }
   $('result-title').textContent = won ? 'Giữ được ánh sáng!' : 'Thua rồi…';
-  $('result-text').textContent = (won ? `Đảo vẫn sáng tới bình minh! Điểm đêm này: ${sim.score}. ` : result.reason === 'dawn' ? `Bình minh lên nhưng chưa đủ ${winNeed(sim)} đèn sáng. ` : 'Ngọn lửa của Mây đã tắt. ') + `Tổng điểm: ${totalScore}`;
+  // Leaderboard score = sum of WON nights only (Ticket-04), so say explicitly what a lost night's points do.
+  $('result-text').textContent = (won ? `Đảo vẫn sáng tới bình minh! Điểm đêm này: ${sim.score}. ` : (result.reason === 'dawn' ? `Bình minh lên nhưng chưa đủ ${winNeed(sim)} đèn sáng. ` : 'Ngọn lửa của Mây đã tắt. ') + `Điểm đêm này (${sim.score}) không được tính vì thua. `)
+    + `Tổng điểm (các đêm đã thắng: ${nightsWon}) = ${totalScore} — đây là điểm sẽ lưu vào bảng xếp hạng.`;
   $('btn-next').style.display = won ? '' : 'none';
   show('result');
 }
