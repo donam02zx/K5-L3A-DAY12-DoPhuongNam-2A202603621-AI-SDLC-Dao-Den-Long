@@ -46,6 +46,8 @@ Không muốn cài gì: tải `dao-den-long-v1.0.0-web.zip` từ [Release](../..
 | Bình minh (khi thắng): mỗi đèn đang sáng | +50 + số dầu còn lại (làm tròn xuống) |
 | Bình minh (khi thắng): mỗi Ngọn Lửa còn lại | +50 |
 
+Menu chính có **Chọn đêm (1/2/3)** để luyện tập hoặc demo một đêm bất kỳ. Khi demo có thể thêm `?lit=K` vào URL để thắp sẵn K đèn; điểm của lượt có `?lit` **không** được lưu vào bảng xếp hạng.
+
 Tổng điểm là tổng điểm các Đêm đã thắng. Sau màn Bình Minh, hoặc khi thua, bạn có thể nhập tên để lưu vào **Bảng xếp hạng** top 10 (mở từ menu chính).
 
 ## Test, headless, bench, soak

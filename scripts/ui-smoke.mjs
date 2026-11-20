@@ -37,6 +37,13 @@ try {
   const minFont = await ev(`return Math.min(...[...document.querySelectorAll('#menu *')].filter(e => e.textContent.trim() && e.offsetParent).map(e => parseFloat(getComputedStyle(e).fontSize)))`);
   check('min UI font size >= 18px at 1280x720', minFont >= 18, minFont);
 
+  // night select from the main menu (practice / demo)
+  await click('[data-act="start-night"][data-night="3"]');
+  const intro = await ev(`return document.getElementById('intro-night').textContent + ' ' + document.getElementById('intro-name').textContent`);
+  check('menu night select jumps straight to Night 3', /Đêm 3/.test(intro) && /Chuông/.test(intro), intro);
+  await click('#intro [data-act="play"]'); await sleep(300);
+  await key('Escape'); await click('#pause [data-act="menu"]');
+
   // key remap: duplicate is refused, then a free key works, reset restores defaults, all persisted
   await click('[data-act="settings"]');
   await click('[data-action="jump"]');

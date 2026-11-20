@@ -7,6 +7,11 @@
       "detail": 18
     },
     {
+      "name": "menu night select jumps straight to Night 3",
+      "ok": true,
+      "detail": "Đêm 3 Đảo Chuông"
+    },
+    {
       "name": "duplicate key is detected and reported",
       "ok": true,
       "detail": "⚠ Phím W đang dùng cho \"Đi lên\". Chọn phím khác."

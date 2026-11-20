@@ -218,6 +218,7 @@ async function saveScore(screen) {
   const name = input.value.trim().normalize('NFC');
   if (!validName(name)) { msg.textContent = '⚠ Tên cần 3–12 ký tự: chữ, số hoặc _'; return; }
   if (savedThisRun) { msg.textContent = 'Điểm của lượt này đã được lưu.'; return; }
+  if (params.has('lit')) { msg.textContent = 'Chế độ demo (?lit=…) không lưu điểm vào bảng xếp hạng.'; return; }
   const entry = { name, score: totalScore, nights_won: nightsWon, achieved_at: isoWithOffset(), seed: runSeed ?? 0 };
   let ok = false;
   try { const r = await fetch('/api/leaderboard', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(entry) }); ok = r.ok; } catch { /* no server */ }
@@ -278,6 +279,7 @@ document.addEventListener('click', (e) => {
   if (!act) return;
   unlock();
   if (act === 'start') { totalScore = 0; nightsWon = 0; runSeed = null; startNight(+(params.get('night') ?? 1)); }
+  else if (act === 'start-night') { totalScore = 0; nightsWon = 0; runSeed = null; startNight(+e.target.dataset.night); } // practice / demo: jump to any night
   else if (act === 'play') play();
   else if (act === 'resume') resume();
   else if (act === 'retry') startNight(night);
