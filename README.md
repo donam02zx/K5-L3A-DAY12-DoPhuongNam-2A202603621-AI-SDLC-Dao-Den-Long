@@ -1,6 +1,6 @@
 # Đảo Đèn Lồng — v1.0.0
 
-> **Video demo:** _(link sẽ thêm khi quay xong, đính kèm Release v1.0.0)_ · **Release:** [v1.0.0](../../releases/tag/v1.0.0) · Bằng chứng: [docs/proof/](docs/proof/README.md) · Retro: [docs/notes/retro.md](docs/notes/retro.md)
+> **Video demo (4:57):** [docs/demo/demo.mp4](docs/demo/demo.mp4) (cũng đính kèm ở [Release v1.0.0](../../releases/tag/v1.0.0)) · **Release:** [v1.0.0](../../releases/tag/v1.0.0) · Bằng chứng: [docs/proof/](docs/proof/README.md) · Retro: [docs/notes/retro.md](docs/notes/retro.md)
 
 Game 3D góc nhìn thứ ba. Người chơi là **Mây**, người giữ đèn nhỏ tuổi đội nón lá treo đèn lồng. Mây đi qua **3 Đêm**: Đảo Bến, Đảo Cau (hai đảo nối bằng cầu tre), Đảo Chuông (ba tầng, có gió mạnh). Mỗi đêm Mây gom đom đóm, thắp và châm dầu cho các Đèn Lồng Lớn, né **Bóng Mực** (chúng hút dầu đèn) và **Gió Lạc** (chúng cướp đom đóm). Mục tiêu là giữ đảo sáng tới bình minh.
 

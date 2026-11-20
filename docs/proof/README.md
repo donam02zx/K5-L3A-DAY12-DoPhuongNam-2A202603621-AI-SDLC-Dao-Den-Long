@@ -88,3 +88,4 @@ Máy tự đo: Windows 11, i7-9750H, Intel UHD 630, 32 GB, Chrome 157 (số tham
 | Contract v1.3 (bench_cmd, soak_cmd); v1.0–v1.2 giữ nguyên | Test `contract v1.3`, 46 test cũ vẫn đạt | `npm test` | Đạt |
 | Release v1.0.0 chạy được | Chạy thử zip: `node scripts/serve.mjs` → HTTP 200, API bảng xếp hạng | `dao-den-long-v1.0.0-web.zip` (đính kèm Release) | Đạt (thử trên máy này) |
 | Clone sạch, tối đa 3 lệnh | Clone từ GitHub vào thư mục trống → `npm ci` → `npm start` (HTTP 200) → `npm test` (52/52) trên Windows; CI chạy `npm ci` + test + build trên Ubuntu và macOS | Đã chạy thử lúc 2026-11-20 | Đạt (2 lệnh) |
+| Video demo .mp4 dưới 5 phút | Người làm bài quay; nén bằng ffmpeg (tăng tốc 1.04×, 1280 px) từ bản gốc 5:09 / 365 MB | [docs/demo/demo.mp4](../demo/demo.mp4): 4:57, 8.8 MB; đính kèm Release v1.0.0 | Đạt |
