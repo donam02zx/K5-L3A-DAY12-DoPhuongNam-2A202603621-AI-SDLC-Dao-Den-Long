@@ -70,6 +70,17 @@ Mọi số tự chọn ở Phase 1 đã được **thay bằng số chuẩn**. A
 | P2-15 | Gió | Hướng gió là số nguyên độ ngẫu nhiên. Cơn gió bắt đầu ở sim_tick 1800k và kéo dài 300 tick |
 | P2-16 | Tạm dừng trong bản có giao diện | Menu tạm dừng chỉ đơn giản là không gọi `step()`. Phím pause trong contract dùng cho headless |
 
-## Phase 3 (Ticket-03)
+## Phase 3 (Ticket-03, Contract v1.2)
+
+Quyết định thiết kế ở [ADR 0001](../adr/0001-lantern-fuel-and-dawn-win.md). Các thay đổi phá vỡ tương thích ở [CHANGELOG.md](../../CHANGELOG.md).
+
+| # | Chỗ mơ hồ | Giả định (**nên hỏi trợ giảng**) |
+|---|---|---|
+| P3-1 | Đèn "đầy dầu" | Lúc được thắp thì fuel = 100, nhưng hao ngay ở bước 2 của tick sau. Vì vậy chỉ trong đúng tick vừa thắp là đèn "đầy" |
+| P3-2 | Khóa điểm mới trong `tuning.score` | Giữ đúng 5 khóa cũ (`per_mote` 5, `per_second_left` 0). Thắp lại +40, choáng Bóng đang hút +15 và thưởng bình minh nằm ở `SPEC.score3` |
+| P3-3 | "Đi về đèn tắt gần nhất như trước" | Bóng wander đi tới đèn tắt gần nhất (bằng nhau thì id nhỏ hơn) với tốc độ 1.5 m/s. Nếu mọi đèn đều sáng và còn ≥ 30 dầu thì đi lang thang như Phase 2 |
+| P3-4 | `fuel_drain` | Mỗi Bóng Mực đếm riêng số tick đã hút; cứ 60 tick thì ghi một sự kiện với lượng dầu sau khi bị hút |
+| P3-5 | Bóng đang drain thì có gây sát thương không | Không. Chỉ wander và chase mới gây sát thương; Mây vào trong 6 m thì Bóng chuyển sang chase |
+| P3-6 | Đèn được scenario đặt `lit: true` | Mặc định `ever_lit = true`, và không tính vào `successful_lights` |
 
 ## Phase 4 (Ticket-04)

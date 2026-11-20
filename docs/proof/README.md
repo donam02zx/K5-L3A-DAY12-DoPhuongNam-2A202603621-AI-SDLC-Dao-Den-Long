@@ -51,3 +51,23 @@ Acceptance criteria chi tiết, mỗi mục ánh xạ tới một test hoặc b�
 | HUD, bảng màu, 3 đảo hiển thị | Ảnh chụp Chrome headless | [menu](phase-2/screenshot-menu.png), [night1](phase-2/screenshot-night1.png), [night2](phase-2/screenshot-night2.png), [night3](phase-2/screenshot-night3.png) | Đạt (ảnh) |
 | Chuỗi 3 Đêm, menu tạm dừng, cài đặt lưu lại, âm thanh | Người làm bài thử tay sau tag `phase-2` (2026-11-20) | Báo cáo thử tay, không có bằng chứng tự động | Đạt (thử tay) |
 | Chơi được từ đầu tới thắng với số chuẩn | Bot tham lam (`scripts/bot.js`) | [proof-run.txt](phase-2/proof-run.txt) mục 4 | **Chưa đạt bằng bot**: tốt nhất 3/5 đèn ở Đêm 1, 0–1 đèn ở Đêm 2/3. Luật đã được kiểm chứng bằng test; độ khó do số chuẩn quyết định. Người làm bài thử tay sau tag `phase-2` (2026-11-20) và báo **thắng được khi chơi tay** | Bot: chưa đạt · Thử tay: Đạt |
+
+## Phase 3 (Ticket-03, Contract v1.2)
+
+Thiết kế: [ADR 0001](../adr/0001-lantern-fuel-and-dawn-win.md). Thay đổi phá vỡ tương thích: [CHANGELOG.md](../../CHANGELOG.md). Chạy lại: `npm test` (46 test).
+
+| Yêu cầu | Cách kiểm chứng | Bằng chứng | Kết quả |
+|---|---|---|---|
+| Contract v1.2: số mới, snapshot, scenario, sự kiện | Test so số; test snapshot; test kiểm tra scenario | test `A`, `B/E`, `scenario v1.2 validation` | Đạt |
+| Nhiên liệu: thắp thì 100, hao 1/s, tắt ở 0 kèm `lantern_out`, nhớ `ever_lit` | Test | test `fuel` | Đạt |
+| Châm dầu: công thức `used`, tối đa 100, đèn đầy không được chọn | Test | test `refuel`, `interact: nearest acceptable…` | Đạt |
+| Thắp lại cần 5, +40, `relight`, `relit_count` | Test | test `relight` | Đạt |
+| Sức chứa 10 + 2 × số lần thắp, tối đa 20 | Test | test `capacity` | Đạt |
+| Vùng an toàn mất khi fuel < 30, còn khi đúng 30 | Test | test `safe zone` | Đạt |
+| Bóng Mực hút dầu: chọn mục tiêu, 5/s cộng dồn, `fuel_drain` mỗi 60 tick, các lối thoát khỏi drain, bị đẩy ra khi đèn lên lại ≥ 30 | Test | test `drain` (2 test) | Đạt |
+| Tỏa sáng trúng Bóng đang hút: +15 | Test | test `pulse on a draining shade` | Đạt |
+| Không thắng sớm; thắng `dawn_survived` cần 3/5, 4/6, 5/7; thưởng bình minh; no_flames xét trước | Test | test `no early win`, `dawn win needs…`, `dawn: …`, `no_flames beats dawn_survived` | Đạt |
+| Thời lượng 240/270/300 s | Test | test `nights last…` | Đạt |
+| Regression Phase 1–2 (các luật không bị thay) | 34 test cũ vẫn chạy; test bị luật mới thay thì sửa hoặc xóa kèm lý do (đầu `tests/contract.test.js`) | `npm test` | Đạt |
+| HUD: đèn sáng/cần, đang mang/sức chứa, nhắc châm dầu | Ảnh | [screenshot-fuel.png](phase-3/screenshot-fuel.png) | Đạt (ảnh) |
+| Thanh dầu, nhấp nháy 1 Hz khi < 30, đèn tắt xẹp và rách, chế độ mù màu được lưu | Code (`src/render/main.js`) | Đèn sáng nằm ngoài khung ảnh, nên ảnh không thấy thanh dầu | **Chưa kiểm chứng**: cần thử tay |

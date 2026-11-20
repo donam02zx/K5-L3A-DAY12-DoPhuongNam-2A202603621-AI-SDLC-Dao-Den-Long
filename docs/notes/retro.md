@@ -12,6 +12,9 @@
 - Hỏng phase trước?: luật Phase 1 bị ticket thay nên test đã được sửa kèm lý do; bằng chứng Phase 1 vẫn còn nguyên ở tag `phase-1`.
 - Cần chỉnh: hỏi trợ giảng về các giả định P2-1…P2-16; thêm test UI nếu còn thời gian.
 ### Phase 3
+- Đạt: toàn bộ luật Ticket-03 có test (46/46). Test cũ bị thay luật đã được sửa hoặc xóa kèm lý do. Có ADR và CHANGELOG.
+- Chưa kiểm chứng: hiển thị thanh dầu, nhấp nháy và chế độ mù màu (chưa có ảnh rõ; cần thử tay). Bot chưa được cập nhật cho luật mới.
+- Hỏng phase trước?: không có test nào của luật còn hiệu lực bị hỏng.
 ### Phase 4
 
 ## Tổng kết dự án

@@ -15,6 +15,7 @@
     @keyframes blink { 50% { opacity: .35; } }
     #topright { top: 14px; right: 16px; text-align: right; font-size: 18px; line-height: 1.5; }
     #topright b { color: var(--gold); }
+    #topright b.warn { color: var(--danger); }
     #bar { bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; }
     #bar i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #FFE58A55; background: #0006; }
     #bar i.on { background: radial-gradient(#FFF6C2, #FFE58A 60%, #FFB34700); border-color: #FFE58A; box-shadow: 0 0 10px #FFE58A; }
@@ -95,6 +96,7 @@
     <h1>Cài đặt</h1>
     <label>Âm lượng <input id="set-volume" type="range" min="0" max="1" step="0.05"></label>
     <label>Độ nhạy chuột <input id="set-sens" type="range" min="0.05" max="1" step="0.05"></label>
+    <label>Bảng màu dễ phân biệt <input id="set-cb" type="checkbox"></label>
     <button data-act="back">Xong</button>
   </div>
   <script type="module" src="/src/render/main.js"></script>

@@ -1,7 +1,7 @@
 // Rendering + UI layer. Reads sim state, never owns game rules.
 // Input is converted to the same held-state format the headless runner uses.
 import * as THREE from 'three';
-import { createSim, step, TICK_RATE, windWarning } from '../core/sim.js';
+import { createSim, step, TICK_RATE, windWarning, capacity, winNeed } from '../core/sim.js';
 import { TUNING as T } from '../core/tuning.js';
 import { NIGHTS } from '../core/maps.js';
 import { PAL, buildWorld, makePad } from './world.js';
@@ -11,7 +11,7 @@ const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 
 // ---------- settings (persisted) ----------
-const settings = { volume: 0.6, sens: 0.3 };
+const settings = { volume: 0.6, sens: 0.3, colorblind: false };
 try { Object.assign(settings, JSON.parse(localStorage.getItem('ddl-settings') ?? '{}')); } catch { /* storage unavailable */ }
 const saveSettings = () => { try { localStorage.setItem('ddl-settings', JSON.stringify(settings)); } catch { /* ignore */ } };
 setVolume(settings.volume);
@@ -19,6 +19,19 @@ $('set-volume').value = settings.volume;
 $('set-sens').value = settings.sens;
 $('set-volume').oninput = (e) => { settings.volume = +e.target.value; setVolume(settings.volume); saveSettings(); sfx.pick(); };
 $('set-sens').oninput = (e) => { settings.sens = +e.target.value; saveSettings(); };
+// Ticket-03 colour-blind palette: shade rim/eyes #7A3CFF -> #00B3FF, UI danger #FF5A5F -> #FFFFFF + ⚠
+const shadeRimMat = new THREE.MeshBasicMaterial({ color: PAL.shadeRim, wireframe: true, transparent: true, opacity: 0.5 });
+const shadeEyeMat = new THREE.MeshBasicMaterial({ color: 0xc58bff });
+function applyPalette() {
+  const cb = settings.colorblind;
+  shadeRimMat.color.setHex(cb ? 0x00b3ff : PAL.shadeRim);
+  shadeEyeMat.color.setHex(cb ? 0x00b3ff : 0xc58bff);
+  document.documentElement.style.setProperty('--danger', cb ? '#FFFFFF' : '#FF5A5F');
+  document.body.classList.toggle('cb', cb);
+}
+$('set-cb').checked = settings.colorblind;
+$('set-cb').onchange = (e) => { settings.colorblind = e.target.checked; saveSettings(); applyPalette(); };
+applyPalette();
 
 // ---------- renderer / scene ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -82,16 +95,25 @@ function makeLantern() {
   const ringMat = new THREE.MeshBasicMaterial({ color: PAL.lampOn, transparent: true, opacity: 0 });
   const ring = new THREE.Mesh(new THREE.RingGeometry(T.safe_radius - 0.12, T.safe_radius, 64), ringMat);
   ring.rotation.x = -Math.PI / 2; ring.position.y = 0.04;
-  g.add(post, roof, glass, core, light, ring);
-  g.userData = { glassMat, light, ringMat, core };
+  const barBg = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.6, depthTest: false }));
+  const barFill = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.16), new THREE.MeshBasicMaterial({ color: PAL.lampOn, depthTest: false }));
+  barFill.geometry.translate(0.7, 0, 0);
+  barFill.position.x = -0.7; barFill.position.z = 0.01;
+  const bar = new THREE.Group();
+  bar.add(barBg, barFill);
+  bar.position.y = 4.6;
+  bar.renderOrder = 10;
+  const tear = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.6), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+  tear.position.set(0.1, 3.3, 0.41); tear.rotation.z = 0.5;
+  g.add(post, roof, glass, core, light, ring, bar, tear);
+  g.userData = { glassMat, light, ringMat, core, bar, barFill, glass, tear };
   return g;
 }
 function makeShade() {
   const m = new THREE.Mesh(shadeGeo, new THREE.MeshStandardMaterial({ color: PAL.shade, emissive: PAL.shadeRim, emissiveIntensity: 0.35, flatShading: true }));
-  const rim = new THREE.Mesh(shadeGeo, new THREE.MeshBasicMaterial({ color: PAL.shadeRim, wireframe: true, transparent: true, opacity: 0.5 }));
+  const rim = new THREE.Mesh(shadeGeo, shadeRimMat);
   rim.scale.setScalar(1.05);
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xc58bff });
-  for (const x of [-0.28, 0.28]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), eyeMat); e.position.set(x, 0.2, 0.78); m.add(e); }
+  for (const x of [-0.28, 0.28]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), shadeEyeMat); e.position.set(x, 0.2, 0.78); m.add(e); }
   m.add(rim);
   m.userData.rim = rim;
   return m;
@@ -156,7 +178,7 @@ function startNight(n) {
   mode = 'intro';
   show('intro');
 }
-function play() { mode = 'play'; show(null); unlock(); startMusic(); say('Gom đom đóm, mang về thắp Đèn Lồng Lớn!'); }
+function play() { mode = 'play'; show(null); unlock(); startMusic(); say(`Thắp đèn và giữ ít nhất ${winNeed(sim)} đèn sáng tới bình minh!`); }
 function pause() { if (mode !== 'play') return; mode = 'paused'; show('pause'); document.exitPointerLock?.(); }
 function resume() { mode = 'play'; show(null); }
 function endNight(result) {
@@ -166,8 +188,8 @@ function endNight(result) {
   if (won) totalScore += sim.score;
   (won ? sfx.win : sfx.lose)();
   if (won && night === 3) { $('dawn-score').textContent = `Tổng điểm: ${totalScore}`; show('dawn'); mode = 'dawn'; return; }
-  $('result-title').textContent = won ? 'Đèn đã sáng!' : 'Thua rồi…';
-  $('result-text').textContent = (won ? `Điểm đêm này: ${sim.score}. ` : result.reason === 'dawn' ? 'Trời đã sáng mà đảo vẫn còn tối. ' : 'Ngọn lửa của Mây đã tắt. ') + `Tổng điểm: ${totalScore}`;
+  $('result-title').textContent = won ? 'Giữ được ánh sáng!' : 'Thua rồi…';
+  $('result-text').textContent = (won ? `Đảo vẫn sáng tới bình minh! Điểm đêm này: ${sim.score}. ` : result.reason === 'dawn' ? `Bình minh lên nhưng chưa đủ ${winNeed(sim)} đèn sáng. ` : 'Ngọn lửa của Mây đã tắt. ') + `Tổng điểm: ${totalScore}`;
   $('btn-next').style.display = won ? '' : 'none';
   show('result');
 }
@@ -215,7 +237,7 @@ function readInput() {
 // ---------- HUD ----------
 let toastT = 0, lastCountdown = -1;
 const say = (msg) => { $('toast').textContent = msg; $('toast').style.opacity = 1; toastT = 2.2; };
-$('bar').innerHTML = '<i></i>'.repeat(T.carry_capacity);
+$('bar').innerHTML = '<i></i>'.repeat(T.capacity_max);
 const barCells = [...$('bar').children];
 const v3 = new THREE.Vector3();
 
@@ -226,9 +248,11 @@ function drawHud() {
   const secs = Math.ceil(sim.timeLeftTicks / TICK_RATE);
   $('clock').textContent = `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
   $('clock').classList.toggle('danger', secs <= 30);
+  if (secs <= 30 && settings.colorblind) $('clock').textContent = '⚠ ' + $('clock').textContent;
   if (secs <= 10 && secs !== lastCountdown && mode === 'play') { lastCountdown = secs; sfx.tick(); }
-  $('topright').innerHTML = `Đèn <b>${litN}/${sim.lanterns.length}</b><br>Điểm <b>${totalScore + sim.score}</b>`;
-  barCells.forEach((c, i) => c.classList.toggle('on', i < p.carried));
+  const need = winNeed(sim), cap = capacity(sim);
+  $('topright').innerHTML = `Đèn sáng <b class="${litN < need ? 'warn' : ''}">${litN < need && settings.colorblind ? '⚠ ' : ''}${litN}/${sim.lanterns.length}</b> (cần ${need})<br>Điểm <b>${totalScore + sim.score}</b><br>Đom đóm <b>${p.carried}/${cap}</b>`;
+  barCells.forEach((c, i) => { c.classList.toggle('on', i < p.carried); c.style.display = i < cap ? '' : 'none'; });
   const cd = (id, left, total, ready) => {
     $(id).querySelector('.fill').style.height = `${(left / total) * 100}%`;
     $(id).classList.toggle('off', !ready);
@@ -240,11 +264,11 @@ function drawHud() {
   $('wind').style.display = windWarning(sim) || sim.wind.active ? 'block' : 'none';
   $('wind').textContent = sim.wind.active ? '🍃 Gió mạnh!' : '🍃 Gió sắp nổi…';
   // prompt near an unlit lantern
-  const near = sim.lanterns.find((L) => !L.lit && Math.hypot(L.pos[0] - p.pos[0], L.pos[2] - p.pos[2]) <= T.interact_radius);
+  const near = sim.lanterns.find((L) => (!L.lit || L.fuel < T.fuel_max * 60) && Math.hypot(L.pos[0] - p.pos[0], L.pos[2] - p.pos[2]) <= T.interact_radius);
   $('prompt').style.display = near ? 'block' : 'none';
-  if (near) $('prompt').textContent = `E — Nạp ánh sáng (${near.deposited}/${T.lantern_cost})`;
+  if (near) $('prompt').textContent = near.lit ? `E — Châm dầu (${Math.floor(near.fuel / 60)}/${T.fuel_max})` : `E — ${near.everLit ? 'Thắp lại' : 'Nạp ánh sáng'} (${near.deposited}/${near.everLit ? T.relight_cost : T.lantern_cost})`;
   // arrow to nearest unlit lantern when off-screen
-  const target = sim.lanterns.filter((L) => !L.lit).sort((a, b) => Math.hypot(a.pos[0] - p.pos[0], a.pos[2] - p.pos[2]) - Math.hypot(b.pos[0] - p.pos[0], b.pos[2] - p.pos[2]))[0];
+  const target = sim.lanterns.filter((L) => !L.lit || L.fuel < T.low_fuel_threshold * 60).sort((a, b) => Math.hypot(a.pos[0] - p.pos[0], a.pos[2] - p.pos[2]) - Math.hypot(b.pos[0] - p.pos[0], b.pos[2] - p.pos[2]))[0];
   const arrow = $('arrow');
   if (!target) { arrow.style.display = 'none'; return; }
   v3.set(target.pos[0], target.pos[1] + 3, target.pos[2]).project(camera);
@@ -266,7 +290,9 @@ function handle(e) {
   switch (e.name) {
     case 'mote_picked': sfx.pick(); break;
     case 'deposit': sfx.deposit(); break;
-    case 'lantern_lit': sfx.lit(); say(`Đèn ${e.data.lantern_id} đã sáng!`); break;
+    case 'lantern_lit': sfx.lit(); say(`Đèn ${e.data.lantern_id} ${e.data.relight ? 'được thắp lại' : 'đã sáng'}!`); break;
+    case 'refuel': sfx.deposit(); break;
+    case 'lantern_out': sfx.shade(); say(`Đèn ${e.data.lantern_id} đã cạn dầu và tắt!`); break;
     case 'pulse': sfx.pulse(); waveT = 0; wave.position.set(p.pos[0], p.pos[1] + 0.1, p.pos[2]); break;
     case 'player_hit': (e.data.by === 'fall' ? sfx.fall : sfx.hit)(); say(e.data.by === 'fall' ? 'Mây rơi xuống biển mây!' : `Bị Bóng Mực chạm! Rơi ${e.data.dropped} đom đóm`); break;
     case 'shade_spawned': sfx.shade(); break;
@@ -317,12 +343,20 @@ renderer.setAnimationLoop((now) => {
 
   sync(pools.lanterns, sim.lanterns, makeLantern, (m, L) => {
     m.position.set(...L.pos);
-    const fill = L.lit ? 1 : L.deposited / T.lantern_cost;
-    m.userData.glassMat.color.setHex(L.lit ? PAL.lampOn : PAL.lampOff);
-    m.userData.glassMat.emissiveIntensity = L.lit ? 2.2 : fill * 0.8;
-    m.userData.core.visible = L.lit;
-    m.userData.light.intensity = L.lit ? 35 : fill * 4;
-    m.userData.ringMat.opacity = L.lit ? 0.35 : 0;
+    const u = m.userData, fuel = L.fuel / 60, low = L.lit && fuel < T.low_fuel_threshold;
+    const blinkOff = low && Math.floor(time) % 2 === 1; // 1 Hz slow blink when fuel < 30
+    const fill = L.lit ? 1 : L.deposited / (L.everLit ? T.relight_cost : T.lantern_cost);
+    u.glassMat.color.setHex(L.lit ? PAL.lampOn : PAL.lampOff);
+    u.glassMat.emissiveIntensity = L.lit ? (blinkOff ? 0.4 : 2.2) : fill * 0.8;
+    u.core.visible = L.lit && !blinkOff;
+    u.light.intensity = L.lit ? (blinkOff ? 8 : 35) : fill * 4;
+    u.ringMat.opacity = L.lit && !low ? 0.35 : 0;
+    u.bar.visible = L.lit && !blinkOff;
+    u.bar.lookAt(camera.position);
+    u.barFill.scale.x = Math.max(0.001, fuel / T.fuel_max);
+    u.barFill.material.color.setHex(low ? (settings.colorblind ? 0xffffff : PAL.danger) : PAL.lampOn);
+    u.glass.scale.y = L.lit ? 1 : 0.8; // unlit lantern is squashed 20% ...
+    u.tear.visible = !L.lit && L.everLit; // ... and an out lantern shows a torn paper
   });
   sync(pools.motes, sim.motes, (mo) => new THREE.Mesh(moteGeo, mo.kind === 'dropped' ? droppedMat : moteMat), (m, mo) => {
     const ph = mo.pos[0] * 1.7 + mo.pos[2];
