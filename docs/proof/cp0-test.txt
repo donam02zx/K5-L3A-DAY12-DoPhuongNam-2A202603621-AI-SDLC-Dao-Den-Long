@@ -1,0 +1,15 @@
+
+> dao-den-long@0.1.0 test
+> node --test "tests/**/*.test.js"
+
+✔ rng is deterministic for the same seed (1.1288ms)
+✔ player moves 4 units in 1 second at moveX=1 (1.0064ms)
+✔ headless CLI: same input twice gives identical output (154.459ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 274.9358

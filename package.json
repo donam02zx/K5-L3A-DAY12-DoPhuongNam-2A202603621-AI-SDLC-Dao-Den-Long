@@ -1,0 +1,33 @@
+{
+  "name": "dao-den-long",
+  "version": "0.1.0",
+  "description": "Dao Den Long - 3D third-person game (AI SDLC lab)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "headless": "node src/headless/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/donam02zx/K5-L3A-DAY12-DoPhuongNam-2A202603621-AI-SDLC-Dao-Den-Long.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/donam02zx/K5-L3A-DAY12-DoPhuongNam-2A202603621-AI-SDLC-Dao-Den-Long/issues"
+  },
+  "homepage": "https://github.com/donam02zx/K5-L3A-DAY12-DoPhuongNam-2A202603621-AI-SDLC-Dao-Den-Long#readme",
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.4"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}
