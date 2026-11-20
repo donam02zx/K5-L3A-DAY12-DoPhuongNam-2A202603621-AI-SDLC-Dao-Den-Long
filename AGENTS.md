@@ -5,8 +5,11 @@
 ## Commands
 - Install: `npm ci`
 - Test (must pass before finishing any task): `npm test`
-- Headless: `npm run headless -- <scenario.json>`
+- Headless: `node src/headless/cli.js --seed 1 --night 1 --ticks 600 --out out.jsonl [--scenario f] [--inputs f]`
+- Phase proof (run before tagging): `bash scripts/proof-phase1.sh`
 - Dev server: `npm run dev` · Build: `npm run build`
+- Gameplay numbers live ONLY in `src/core/tuning.js`; mirror them into `game.contract.json` (a test enforces equality).
+- Tests go through the CLI (`tests/helpers.js runHeadless`). Use `quiet()` scenarios — default random shades kill an idle player in ~14 s.
 
 ## Architecture (do not break)
 - `src/core/` = pure game logic. No DOM, no `three`, no `Math.random`, no `Date.now`. Use `makeRng(seed)`.

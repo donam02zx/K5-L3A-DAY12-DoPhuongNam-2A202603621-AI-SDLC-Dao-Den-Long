@@ -1,0 +1,35 @@
+# Phase 1 proof run — v24.17.0, MINGW64_NT-10.0-26200
+
+## 1. Bot plays full default Night 1 (seeds 1-5), replayed through headless CLI
+seed 1: {"type":"event","tick":3121,"name":"game_over","data":{"result":"won","reason":"all_lit"}}
+        {"type":"end","ticks":3121,"state":"won","score":1454}
+seed 2: {"type":"event","tick":3131,"name":"game_over","data":{"result":"won","reason":"all_lit"}}
+        {"type":"end","ticks":3131,"state":"won","score":1489}
+seed 3: {"type":"event","tick":2412,"name":"game_over","data":{"result":"won","reason":"all_lit"}}
+        {"type":"end","ticks":2412,"state":"won","score":1418}
+seed 4: {"type":"event","tick":2508,"name":"game_over","data":{"result":"won","reason":"all_lit"}}
+        {"type":"end","ticks":2508,"state":"won","score":1451}
+seed 5: {"type":"event","tick":2672,"name":"game_over","data":{"result":"won","reason":"all_lit"}}
+        {"type":"end","ticks":2672,"state":"won","score":1445}
+
+## 2. Idle player on default map loses (shades chase and hit)
+{"type":"event","tick":635,"name":"player_hit","data":{"by":"shade","flames":2,"dropped":0}}
+{"type":"event","tick":725,"name":"player_hit","data":{"by":"shade","flames":1,"dropped":0}}
+{"type":"event","tick":815,"name":"player_hit","data":{"by":"shade","flames":0,"dropped":0}}
+{"type":"event","tick":815,"name":"game_over","data":{"result":"lost","reason":"no_flames"}}
+{"type":"end","ticks":815,"state":"lost","score":0}
+
+## 3. Determinism: same seed + inputs twice => identical bytes
+identical (280 lines)
+
+## 4. Malformed inputs => exit code 2
+error: inputs.frames[1].tick must be strictly increasing
+exit code: 2
+
+## 5. Speed: 18000 ticks (full 5-min night)
+233 ms
+
+## 6. Unit/contract tests
+ℹ tests 23
+ℹ pass 23
+ℹ fail 0
