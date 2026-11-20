@@ -1,0 +1,66 @@
+# Phase 2 proof run — v24.17.0, MINGW64_NT-10.0-26200
+
+## 1. Tests (contract v1.1 core + one scenario per new feature)
+✔ A: game.contract.json v1.1 tuning matches the standard numbers (1.9411ms)
+✔ B/E: tick model + v1.1 snapshot fields (74.058ms)
+✔ E: determinism on all 3 nights (random everything + inputs); seed matters (1107.6861ms)
+✔ C: cam_yaw rotation, normalization, instant stop (<= 0.1 s) (255.6964ms)
+✔ jump: 7 m/s, g=20 (peak ~1.225 m), only when grounded (91.3858ms)
+✔ dash: 14 m/s for 12 ticks in facing dir when idle, cooldown 90 ticks from start, keeps height in air (148.3207ms)
+✔ pickup: XZ <= 1.0 inclusive and height <= 1.5; no score for pickup (66.7745ms)
+✔ pickup: capacity 10 (75.5077ms)
+✔ deposit: min(carried, missing), +10 per deposited mote, progress remembered, edge only (138.9263ms)
+✔ deposit: nearest unlit lantern, tie -> smaller id; lit lanterns ignored (75.1905ms)
+✔ win all_lit: +100, bonus floor(seconds)*2 + 50*flames; pre-lit lanterns score nothing (77.328ms)
+✔ win on the exact tick time runs out; dawn otherwise (159.1947ms)
+✔ shade: detect 12 m / give up 18 m, chase speed 4 m/s (235.1969ms)
+✔ hit: -1 flame, floor(carried/2) dropped on ring 1.5-2.5 m (ttl 8 s), invuln 90, shade recoils (74.6019ms)
+✔ dropped motes: pickable from next tick, vanish after 480 ticks (77.4519ms)
+✔ pulse: cost 3, 3D radius 5 from feet+0.8, stun 120, push 4 m over 15 ticks, +5 each, cooldown 3 s (77.1341ms)
+✔ pulse: 3D distance counts height; not enough motes -> nothing (147.4045ms)
+✔ safe zone: lit lantern blocks shades at 6 m; shade inside when lit is evicted within 30 ticks and harmless (161.0872ms)
+✔ fall: once, ignores invuln, -1 flame, lose all motes, wait 60, respawn at start with invuln 90 (143.5424ms)
+✔ no_flames wins over all_lit on the same tick (core-level: not reachable via a scenario) (1.6813ms)
+✔ spawns: 20 motes on distinct points; +1 at tick 240; shades 2 at tick 300 (spawning, >= 15 m away) then every 8 s (94.8797ms)
+✔ scenario setup emits no events except night_start, no score (69.6919ms)
+✔ errors: malformed inputs/scenario/args => exit 2 with stderr (991.8933ms)
+✔ maps: standard lantern positions/ids for nights 1-3 (223.1729ms)
+✔ night 2: bamboo bridge connects the islands; stepping off it falls (184.0964ms)
+✔ night 2: bounce pad launches (vy 14, 24 m/s towards other island), lands on island B in ~1.4 s (83.4386ms)
+✔ night 3: tier walls block, ramps climb to Y=3, pad reaches tier 2 (Y=6) (235.2619ms)
+✔ night 3: wind every 30 s for 5 s pushes 2 m/s; disabled with wind_enabled=false; not on night 1 (400.941ms)
+✔ drifters: spawn at tick 1200 on nights 2/3 only (D1), state idle (207.6244ms)
+✔ drifters: chase when carrying >= 5 within 15 m, steal min(3), flee 240 ticks then removed; invuln does not protect (178.9283ms)
+✔ drifters: steal happens before a shade hit in the same tick (75.4576ms)
+✔ drifters: pulse on chase -> flee without stealing; pulse on loaded flee -> drifter_drop, removed after 120 (149.5523ms)
+✔ charm: pick -> 600 ticks, 7.2 m/s, dash ignores cooldown (not while dashing), respawns after 2700 (301.1502ms)
+✔ pause: tick advances, sim_tick/time/cooldowns/spawns frozen, state "paused", inputs ignored (152.1873ms)
+✔ performance: full night 3 (21600 ticks) headless in <= 30 s (310.9229ms)
+ℹ tests 35
+ℹ pass 35
+ℹ fail 0
+
+## 2. Determinism per night (seed 5, random everything, bot inputs) — two runs, byte compare
+night 1: identical (747 lines)
+night 2: identical (800 lines)
+night 3: identical (377 lines)
+
+## 3. Speed: full night, max 21600 ticks (limit 30 s); player invulnerable so the run is not cut short
+night 1: 280 ms, {"type":"end","ticks":18000,"state":"lost","score":0}
+night 2: 451 ms, {"type":"end","ticks":19800,"state":"lost","score":0}
+night 3: 397 ms, {"type":"end","ticks":21600,"state":"lost","score":0}
+
+## 4. Greedy bot vs standard numbers (honest result: it does NOT win yet)
+{"night":1,"seed":1,"ticks":5152,"state":"lost","score":415,"lit":2}
+{"night":1,"seed":2,"ticks":15144,"state":"lost","score":670,"lit":3}
+{"night":1,"seed":3,"ticks":5142,"state":"lost","score":415,"lit":2}
+{"night":2,"seed":1,"ticks":3437,"state":"lost","score":220,"lit":1}
+{"night":2,"seed":2,"ticks":6554,"state":"lost","score":50,"lit":0}
+{"night":2,"seed":3,"ticks":3972,"state":"lost","score":30,"lit":0}
+{"night":3,"seed":1,"ticks":4128,"state":"lost","score":30,"lit":0}
+{"night":3,"seed":2,"ticks":2639,"state":"lost","score":25,"lit":0}
+{"night":3,"seed":3,"ticks":5606,"state":"lost","score":40,"lit":0}
+
+## 5. Malformed scenario => exit 2
+error: scenario.shades[0].state must be one of spawning, wander, chase, recoil, stunned
+exit code: 2

@@ -39,7 +39,36 @@ Mọi con số nằm ở `src/core/tuning.js` và được copy y nguyên vào `
 ### Thay đổi so với CP0
 - Bỏ `tests/sim.test.js` và `tests/scenarios/hello.json`, vì định dạng headless tạm của CP0 đã được thay bằng Test Contract v1.0. Tính tất định giờ được kiểm tra trong `tests/contract.test.js`.
 
-## Phase 2 (Ticket-02)
+## Phase 2 (Ticket-02, Contract v1.1)
+
+Mọi số tự chọn ở Phase 1 đã được **thay bằng số chuẩn**. Acceptance criteria nằm ở [spec-phase2.md](spec-phase2.md).
+
+### Thay đổi thiết kế so với Phase 1 (và lý do)
+- Điểm đom đóm chuyển từ lúc nhặt sang lúc **nạp** (+10 mỗi con), theo luật chuẩn hóa của ticket.
+- Rơi khỏi đảo giờ có tác dụng (`fall_enabled = true`). Va chạm với địa hình dùng một hàm độ cao mặt đất cho mỗi đêm (`maps.js`): độ cao `null` là biển mây; mặt đất cao hơn chân quá 0.3 m là vách.
+- Bóng Mực có máy trạng thái 5 trạng thái thay cho kiểu "luôn đuổi".
+- Đom đóm bị đánh rơi giờ nằm trên đất (kind `dropped`) thay vì biến mất.
+- Test Phase 1 bị luật mới làm sai đã được **sửa kèm lý do** (danh sách ở đầu `tests/contract.test.js`). Bỏ `scripts/bot.js` khỏi bằng chứng "chơi được tới thắng", vì với số chuẩn bot tham lam không còn thắng (xem phần bằng chứng).
+
+### Giả định mới (chỗ ticket chưa nói rõ; **nên hỏi trợ giảng**)
+| # | Chỗ mơ hồ | Giả định |
+|---|---|---|
+| P2-1 | **Điểm xuất phát Đêm 3** | (0,0,0) nằm trong tháp chuông (bán kính 2 m, cao tới Y=14), nên chọn **(0,0,−20)** trên tầng 0 |
+| P2-2 | Thời gian trạng thái `spawning` | 30 tick, đứng yên và vô hại, sau đó chuyển sang wander |
+| P2-3 | Cách Bóng Mực đi lang thang | 1.5 m/s về một điểm sinh ngẫu nhiên (theo rng), tới nơi thì chọn điểm khác |
+| P2-4 | Độ cao Bóng Mực và Gió Lạc | Bóng Mực ở độ cao mặt đất dưới nó (bay qua biển mây thì giữ độ cao cũ, vượt được vách). Gió Lạc lơ lửng +1 m, khi đuổi thì bám theo độ cao của Mây |
+| P2-5 | Sau recoil hoặc stunned | Chuyển về wander, rồi lại xét phát hiện ngay trong tick đó |
+| P2-6 | "Biến mất sau 120 tick" khi Gió Lạc thả đồ | Gió Lạc (không phải đom đóm) chuyển sang removed sau 120 tick. Đom đóm thả ra có ttl chuẩn 480 tick |
+| P2-7 | Tỏa sáng trúng Gió Lạc đang idle | Cũng chuyển sang flee (ticket chỉ nói chase) |
+| P2-8 | `stunned_ids` của pulse | Chỉ gồm Bóng Mực |
+| P2-9 | `player.invuln` trong snapshot | Tính bằng giây (giống `dash_cd_s`, `pulse_cd_s`) |
+| P2-10 | Sự kiện `night_start` | Ghi ở tick 0, trước snapshot 0 |
+| P2-11 | Điểm `end` khi thua | Là điểm đã tích lũy trong đêm (headless chỉ chạy 1 đêm). Trong game, tổng điểm chỉ cộng các Đêm đã thắng |
+| P2-12 | Đẩy lùi do pulse "dừng nếu gặp vật cản" | Vật cản là mặt đất cao hơn Bóng Mực trên 2.3 m (tháp chuông, vách cao) |
+| P2-13 | Điểm "trống" để sinh đom đóm | Không có đom đóm nào trong vòng 0.5 m quanh điểm đó |
+| P2-14 | Ở tick hồi sinh | Mây chưa di chuyển trong tick đó (vận tốc 0) |
+| P2-15 | Gió | Hướng gió là số nguyên độ ngẫu nhiên. Cơn gió bắt đầu ở sim_tick 1800k và kéo dài 300 tick |
+| P2-16 | Tạm dừng trong bản có giao diện | Menu tạm dừng chỉ đơn giản là không gọi `step()`. Phím pause trong contract dùng cho headless |
 
 ## Phase 3 (Ticket-03)
 

@@ -7,6 +7,10 @@
 - Cần chỉnh: cân bằng độ khó nếu ticket sau yêu cầu. Phần render chưa có test tự động, chỉ có ảnh chụp.
 
 ### Phase 2
+- Đạt: số chuẩn và contract v1.1; 35 test qua CLI, mỗi tính năng mới có ít nhất một scenario; tính tất định 3 đêm; chạy cả đêm ≤ 0.5 s; khoảng 60 FPS ở 1280×720; UI đủ menu, tạm dừng, cài đặt, HUD, âm thanh.
+- Chưa đạt hoặc chưa kiểm chứng: bot không thắng được với số chuẩn; chuỗi màn hình, cài đặt và âm thanh chưa có bằng chứng tự động, cần thử tay.
+- Hỏng phase trước?: luật Phase 1 bị ticket thay nên test đã được sửa kèm lý do; bằng chứng Phase 1 vẫn còn nguyên ở tag `phase-1`.
+- Cần chỉnh: hỏi trợ giảng về các giả định P2-1…P2-16; thêm test UI nếu còn thời gian.
 ### Phase 3
 ### Phase 4
 
