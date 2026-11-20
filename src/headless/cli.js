@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Test Contract v1.1 headless runner.
+// Test Contract v1.2 headless runner.
 // node src/headless/cli.js --seed <int> --night <1|2|3> [--scenario f.json] [--inputs f.json]
 //                          --ticks <int> --out <file.jsonl> [--snapshot-every <int>]
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -14,7 +14,7 @@ const isInt = (v) => Number.isInteger(v);
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isVec3 = (v) => Array.isArray(v) && v.length === 3 && v.every(isNum);
 const BUTTONS = ['jump', 'interact', 'pulse', 'dash', 'pause'];
-const SHADE_STATES = ['spawning', 'wander', 'chase', 'recoil', 'stunned'];
+const SHADE_STATES = ['spawning', 'wander', 'chase', 'recoil', 'stunned', 'drain'];
 const DRIFTER_STATES = ['idle', 'chase', 'flee', 'removed'];
 const nonNegInt = (v) => isInt(v) && v >= 0;
 
@@ -72,7 +72,7 @@ export function validateScenario(j, night) {
     const p = j.player;
     if (!isObj(p)) fail('scenario.player must be an object');
     if ('pos' in p && !isVec3(p.pos)) fail('scenario.player.pos must be [x, y, z]');
-    for (const k of ['carried', 'flames', 'invuln_ticks', 'dash_cd_ticks', 'pulse_cd_ticks', 'charm_ticks']) if (k in p && !nonNegInt(p[k])) fail(`scenario.player.${k} must be an integer >= 0`);
+    for (const k of ['carried', 'flames', 'invuln_ticks', 'dash_cd_ticks', 'pulse_cd_ticks', 'charm_ticks', 'successful_lights']) if (k in p && !nonNegInt(p[k])) fail(`scenario.player.${k} must be an integer >= 0`);
   }
   for (const k of ['random_motes', 'random_shades', 'random_drifters', 'wind_enabled']) if (k in j && typeof j[k] !== 'boolean') fail(`scenario.${k} must be boolean`);
   if ('motes' in j) {
@@ -90,6 +90,7 @@ export function validateScenario(j, night) {
       }
       if ('state' in s && !SHADE_STATES.includes(s.state)) fail(`scenario.shades[${i}].state must be one of ${SHADE_STATES.join(', ')}`);
       if ('state_ticks_left' in s && !nonNegInt(s.state_ticks_left)) fail(`scenario.shades[${i}].state_ticks_left must be an integer >= 0`);
+      if ('target_lantern_id' in s && !NIGHTS[night].lanterns.some((l) => l.id === s.target_lantern_id)) fail(`scenario.shades[${i}].target_lantern_id is not a lantern of night ${night}`);
     });
   }
   if ('lanterns' in j) {
@@ -101,6 +102,8 @@ export function validateScenario(j, night) {
       if ('pos' in l && !isVec3(l.pos)) fail(`${at}.pos must be [x, y, z]`);
       if ('deposited' in l && !(isInt(l.deposited) && l.deposited >= 0)) fail(`${at}.deposited must be an integer >= 0`);
       if ('lit' in l && typeof l.lit !== 'boolean') fail(`${at}.lit must be boolean`);
+      if ('ever_lit' in l && typeof l.ever_lit !== 'boolean') fail(`${at}.ever_lit must be boolean`);
+      if ('fuel' in l && !(isNum(l.fuel) && l.fuel >= 0 && l.fuel <= 100)) fail(`${at}.fuel must be a number in [0, 100]`);
     });
   }
   if ('drifters' in j) {
