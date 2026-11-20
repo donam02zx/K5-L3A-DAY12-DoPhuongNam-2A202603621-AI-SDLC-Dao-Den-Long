@@ -46,7 +46,8 @@ const ambient = new THREE.AmbientLight(0x8a90c0, 0.15);
 const moon = new THREE.DirectionalLight(0x9aa8d8, 0.25);
 moon.position.set(-30, 40, 10);
 scene.add(ambient, moon);
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+const BENCH = params.has('bench');
+addEventListener('resize', () => { if (BENCH) return; camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
 // ---------- Mây ----------
 function makeMay() {
@@ -131,6 +132,24 @@ function makeCharm() {
   g.add(border, paper);
   return g;
 }
+// ---------- instanced shades + motes ----------
+const dummy = new THREE.Object3D(), eyeDummy = new THREE.Object3D();
+const COL_SHADE = new THREE.Color(PAL.shade), COL_STUN = new THREE.Color(PAL.shadeStun);
+const shadeBodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: PAL.shadeRim, emissiveIntensity: 0.06, flatShading: true }); // body stays ink-dark (#120A1A), the rim carries the purple
+const eyeGeo = new THREE.SphereGeometry(0.09, 8, 6);
+let shadeInst, rimInst, eyeInst, moteInst, instCap = 0;
+function ensureInstances(nShades, nMotes) {
+  const need = Math.max(64, nShades, nMotes);
+  if (need <= instCap) return;
+  for (const m of [shadeInst, rimInst, eyeInst, moteInst]) if (m) { scene.remove(m); m.dispose(); }
+  instCap = Math.max(need, instCap * 2);
+  shadeInst = new THREE.InstancedMesh(shadeGeo, shadeBodyMat, instCap);
+  rimInst = new THREE.InstancedMesh(shadeGeo, shadeRimMat, instCap);
+  eyeInst = new THREE.InstancedMesh(eyeGeo, shadeEyeMat, instCap * 2);
+  moteInst = new THREE.InstancedMesh(moteGeo, moteMat, instCap);
+  for (const m of [shadeInst, rimInst, eyeInst, moteInst]) { m.count = 0; m.frustumCulled = false; scene.add(m); }
+}
+
 function sync(pool, list, make, apply) {
   const seen = new Set();
   for (const item of list) {
@@ -310,6 +329,37 @@ let acc = 0, last = performance.now(), wasJumping = false, windOn = false;
 let fpsFrames = 0, fpsT = 0, fpsVal = 0;
 const fpsSamples = [];
 
+// ---------- Ticket-04 benchmark mode (?bench=1&seed=42&duration=30) ----------
+const bench = { t0: null, dts: [], startAt: null, done: false, duration: +(params.get('duration') ?? 30), prev: null };
+const post = (what, body) => fetch('/bench/' + what, { method: 'POST', body: JSON.stringify(body ?? {}) }).catch(() => {});
+function benchFrame(now) {
+  if (bench.t0 === null) { bench.t0 = now; post('first', { epoch: Date.now() }); }
+  const el = (now - bench.t0) / 1000;
+  if (bench.prev !== null && el >= 3 && !bench.done) {
+    if (bench.startAt === null) { bench.startAt = now; post('start'); }
+    else bench.dts.push(now - bench.prev);
+    if ((now - bench.startAt) / 1000 >= bench.duration) {
+      bench.done = true;
+      const d = bench.dts, N = d.length, sum = d.reduce((a, b) => a + b, 0);
+      const desc = [...d].sort((a, b) => b - a), asc = [...d].sort((a, b) => a - b);
+      const k = Math.max(1, Math.ceil(0.01 * N));
+      const gl = renderer.getContext(), dbg = gl.getExtension('WEBGL_debug_renderer_info');
+      post('done', {
+        frames: N, avg_fps: +((1000 * N) / sum).toFixed(1),
+        p1_low_fps: +(1000 / (desc.slice(0, k).reduce((a, b) => a + b, 0) / k)).toFixed(1),
+        frame_ms_p95: +asc[Math.max(0, Math.ceil(0.95 * N) - 1)].toFixed(2),
+        gpu: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), ua: navigator.userAgent.match(/(Chrome|Edg)\/[\d.]+/)?.[0] ?? navigator.userAgent,
+        viewport: `${renderer.domElement.width}x${renderer.domElement.height}`,
+      });
+    }
+  }
+  bench.prev = now;
+  // camera: circle r=30 at Y=15 around the origin, starts at angle 0 = (30,15,0), counter-clockwise seen from above, 15 s per lap
+  const a = (2 * Math.PI * el) / 15;
+  camera.position.set(30 * Math.cos(a), 15, 30 * Math.sin(a));
+  camera.lookAt(0, 0, 0);
+}
+
 renderer.setAnimationLoop((now) => {
   const frame = Math.min(now - last, 250);
   last = now;
@@ -318,7 +368,10 @@ renderer.setAnimationLoop((now) => {
   if (params.has('fps')) $('fps').textContent = `${fpsVal.toFixed(0)} FPS · avg ${(fpsSamples.reduce((a, b) => a + b, 0) / Math.max(1, fpsSamples.length)).toFixed(1)}`;
   if (!sim) { renderer.render(scene, camera); return; }
 
-  if (mode === 'play') {
+  if (mode === 'bench') {
+    acc += frame;
+    while (acc >= dt) { step(sim, {}); acc -= dt; }
+  } else if (mode === 'play') {
     acc += frame;
     if (keys.has('ArrowLeft')) yaw += (90 * frame) / 1000;
     if (keys.has('ArrowRight')) yaw -= (90 * frame) / 1000;
@@ -358,19 +411,42 @@ renderer.setAnimationLoop((now) => {
     u.glass.scale.y = L.lit ? 1 : 0.8; // unlit lantern is squashed 20% ...
     u.tear.visible = !L.lit && L.everLit; // ... and an out lantern shows a torn paper
   });
-  sync(pools.motes, sim.motes, (mo) => new THREE.Mesh(moteGeo, mo.kind === 'dropped' ? droppedMat : moteMat), (m, mo) => {
+  // motes and shades are GPU-instanced (a handful of draw calls even for the 200-shade / 100-mote benchmark)
+  ensureInstances(sim.shades.length, sim.motes.length);
+  moteInst.count = sim.motes.length;
+  sim.motes.forEach((mo, i) => {
     const ph = mo.pos[0] * 1.7 + mo.pos[2];
-    m.position.set(mo.pos[0], mo.pos[1] + 0.8 + Math.sin(time * 2 + ph) * 0.2, mo.pos[2]);
-    if (mo.kind === 'dropped' && mo.ttl < 120) m.visible = Math.floor(time * 8) % 2 === 0;
+    const hidden = mo.kind === 'dropped' && mo.ttl < 120 && Math.floor(time * 8) % 2 === 1;
+    dummy.position.set(mo.pos[0], mo.pos[1] + 0.8 + Math.sin(time * 2 + ph) * 0.2, mo.pos[2]);
+    dummy.rotation.set(0, 0, 0);
+    dummy.scale.setScalar(hidden ? 0 : mo.kind === 'dropped' ? 0.75 : 1);
+    dummy.updateMatrix();
+    moteInst.setMatrixAt(i, dummy.matrix);
   });
-  sync(pools.shades, sim.shades, makeShade, (m, sh) => {
+  moteInst.instanceMatrix.needsUpdate = true;
+  shadeInst.count = rimInst.count = sim.shades.length;
+  eyeInst.count = sim.shades.length * 2;
+  sim.shades.forEach((sh, i) => {
     const stunned = sh.state === 'stunned', spawning = sh.state === 'spawning';
-    m.position.set(sh.pos[0], sh.pos[1] + (spawning ? -0.8 + (1 - sh.ticks / 30) * 1.8 : 1 + Math.sin(time * 3 + sh.pos[0]) * 0.15), sh.pos[2]);
-    m.lookAt(p.pos[0], m.position.y, p.pos[2]);
-    m.material.color.setHex(stunned ? PAL.shadeStun : PAL.shade);
-    m.userData.rim.visible = !stunned;
-    m.scale.setScalar(stunned ? 0.8 : 1 + Math.sin(time * 5) * 0.05);
+    dummy.position.set(sh.pos[0], sh.pos[1] + (spawning ? -0.8 + (1 - sh.ticks / 30) * 1.8 : 1 + Math.sin(time * 3 + sh.pos[0]) * 0.15), sh.pos[2]);
+    dummy.rotation.set(0, Math.atan2(p.pos[0] - sh.pos[0], p.pos[2] - sh.pos[2]), 0);
+    const sc = stunned ? 0.8 : 1 + Math.sin(time * 5) * 0.05;
+    dummy.scale.setScalar(sc);
+    dummy.updateMatrix();
+    shadeInst.setMatrixAt(i, dummy.matrix);
+    shadeInst.setColorAt(i, stunned ? COL_STUN : COL_SHADE);
+    dummy.scale.setScalar(stunned ? 0 : sc * 1.05);
+    dummy.updateMatrix();
+    rimInst.setMatrixAt(i, dummy.matrix);
+    for (const [j, ex] of [[0, -0.28], [1, 0.28]]) {
+      eyeDummy.position.set(ex * sc, 0.2 * sc, 0.78 * sc).applyEuler(dummy.rotation).add(dummy.position);
+      eyeDummy.scale.setScalar(1);
+      eyeDummy.updateMatrix();
+      eyeInst.setMatrixAt(i * 2 + j, eyeDummy.matrix);
+    }
   });
+  shadeInst.instanceMatrix.needsUpdate = rimInst.instanceMatrix.needsUpdate = eyeInst.instanceMatrix.needsUpdate = true;
+  if (shadeInst.instanceColor) shadeInst.instanceColor.needsUpdate = true;
   sync(pools.drifters, sim.drifters.filter((d) => d.state !== 'removed'), makeDrifter, (m, d) => {
     m.position.set(d.pos[0], d.pos[1] + 0.5, d.pos[2]);
     m.lookAt(p.pos[0], m.position.y, p.pos[2]);
@@ -404,10 +480,13 @@ renderer.setAnimationLoop((now) => {
     leaves.geometry.attributes.position.needsUpdate = true;
   }
 
-  const th = (yaw * Math.PI) / 180;
-  const camY = Math.max(p.pos[1], -6);
-  camera.position.set(p.pos[0] - Math.sin(th) * 9, camY + 6, p.pos[2] - Math.cos(th) * 9);
-  camera.lookAt(p.pos[0], camY + 1.2, p.pos[2]);
+  if (mode === 'bench') benchFrame(now);
+  else {
+    const th = (yaw * Math.PI) / 180;
+    const camY = Math.max(p.pos[1], -6);
+    camera.position.set(p.pos[0] - Math.sin(th) * 9, camY + 6, p.pos[2] - Math.cos(th) * 9);
+    camera.lookAt(p.pos[0], camY + 1.2, p.pos[2]);
+  }
 
   if (toastT > 0 && (toastT -= frame / 1000) <= 0) $('toast').style.opacity = 0;
   drawHud();
@@ -415,5 +494,15 @@ renderer.setAnimationLoop((now) => {
 });
 
 // Screenshot / benchmark helpers: ?auto=1 skips menus; ?night=N picks the night; ?lit=N pre-lights lanterns.
-if (params.has('auto')) { startNight(+(params.get('night') ?? 1)); play(); }
+if (BENCH) {
+  // standard bench scene: fixed 1280x720 canvas, Night 1, no menus/audio/creative extras
+  renderer.setPixelRatio(1);
+  renderer.setSize(1280, 720);
+  camera.aspect = 1280 / 720; camera.updateProjectionMatrix();
+  worldGroup = buildWorld(1);
+  scene.add(worldGroup);
+  sim = createSim({ bench: true, seed: +(params.get('seed') ?? 42) });
+  mode = 'bench';
+  show(null);
+} else if (params.has('auto')) { startNight(+(params.get('night') ?? 1)); play(); }
 window.__ddl = { get sim() { return sim; }, fps: () => fpsSamples };

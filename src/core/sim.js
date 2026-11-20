@@ -172,6 +172,16 @@ function pickWanderTarget(s) {
   return [...pts[Math.floor(s.rng() * pts.length)]];
 }
 
+// nearest lantern on XZ, tie -> smaller id (linear scan, no allocation)
+function nearestLantern(pos, list) {
+  let best = null, bestD = Infinity;
+  for (const L of list) {
+    const d = dXZ(pos, L.pos);
+    if (d < bestD || (d === bestD && idNum(L.id) < idNum(best.id))) { best = L; bestD = d; }
+  }
+  return best ?? undefined;
+}
+
 function moveToward(pos, target, dist) {
   const [ux, uz, d] = unitXZ(pos, target);
   const k = Math.min(dist, d);
@@ -393,6 +403,9 @@ export function step(s, input) {
 
   // 8. move shades and drifters
   const speed = m.shadeSpeed / TICK_RATE;
+  // lantern fuel/lit state cannot change during step 8, so build the candidate lists once per tick (perf: 200-shade bench)
+  const weakLanterns = s.lanterns.filter((L) => L.lit && L.fuel < lowFuel(T));
+  const unlitLanterns = s.lanterns.filter((L) => !L.lit);
   for (const sh of s.shades) {
     if (sh.evict > 0) {
       const L = sh.evictFrom, [ux, uz, d] = unitXZ(L.pos, sh.pos), out = (T.safe_radius - d) / sh.evict;
@@ -412,9 +425,8 @@ export function step(s, input) {
     if (sh.state === 'chase') moveToward(sh.pos, p.pos, speed);
     else if (sh.state === 'wander') {
       // Ticket-03: nearest weak lit lantern (fuel < 30, tie -> smaller id); else nearest unlit lantern; else roam
-      const near = (list) => list.sort((a, b) => dXZ(sh.pos, a.pos) - dXZ(sh.pos, b.pos) || idNum(a.id) - idNum(b.id))[0];
-      const weak = near(s.lanterns.filter((L) => L.lit && L.fuel < lowFuel(T)));
-      const goal = weak ?? near(s.lanterns.filter((L) => !L.lit));
+      const weak = nearestLantern(sh.pos, weakLanterns);
+      const goal = weak ?? nearestLantern(sh.pos, unlitLanterns);
       sh.lantern = goal ?? null;
       if (goal) {
         if (weak && dXZ(sh.pos, weak.pos) <= S.drain_range_m + EPS) { sh.state = 'drain'; sh.drainTicks = 0; }

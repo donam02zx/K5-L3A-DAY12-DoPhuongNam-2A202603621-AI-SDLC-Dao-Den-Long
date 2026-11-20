@@ -1,0 +1,16 @@
+{
+  "contract_version": "1.3",
+  "avg_fps": 103,
+  "p1_low_fps": 37.2,
+  "frame_ms_p95": 12.9,
+  "frames": 3090,
+  "load_ms": 770,
+  "peak_mem_mb": 793.3,
+  "vsync_off": true,
+  "renderer": "three.js r170 WebGLRenderer (WebGL2) · ANGLE (Intel, Intel(R) UHD Graphics 630 (0x00003E9B) Direct3D11 vs_5_0 ps_5_0, D3D11) · Chrome/157.0.0.0",
+  "os": "Windows_NT 10.0.26200 x64 · Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz x12 · 31.7 GB RAM",
+  "seed": 42,
+  "duration_s": 30,
+  "viewport": "1280x720",
+  "notes": "Chrome app window 1280x720 with --disable-gpu-vsync --disable-frame-rate-limit; peak_mem_mb = summed RSS/working set of all processes of this Chrome instance, sampled every 1 s while measuring"
+}
