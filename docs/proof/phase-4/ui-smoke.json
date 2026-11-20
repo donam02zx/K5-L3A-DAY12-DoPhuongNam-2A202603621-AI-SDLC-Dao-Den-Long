@@ -1,0 +1,78 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "name": "min UI font size >= 18px at 1280x720",
+      "ok": true,
+      "detail": 18
+    },
+    {
+      "name": "duplicate key is detected and reported",
+      "ok": true,
+      "detail": "⚠ Phím W đang dùng cho \"Đi lên\". Chọn phím khác."
+    },
+    {
+      "name": "rebinding saves a new key",
+      "ok": true,
+      "detail": "KeyJ"
+    },
+    {
+      "name": "settings persist across reload (keys, large text, reduce motion)",
+      "ok": true,
+      "detail": {
+        "jump": "KeyJ",
+        "large": true,
+        "reduceMotion": true,
+        "bodyLarge": true
+      }
+    },
+    {
+      "name": "\"Khôi phục mặc định\" restores defaults",
+      "ok": true,
+      "detail": "Space"
+    },
+    {
+      "name": "every action is remappable",
+      "ok": true,
+      "detail": [
+        "up",
+        "down",
+        "left",
+        "right",
+        "jump",
+        "dash",
+        "interact",
+        "pulse",
+        "pause"
+      ]
+    },
+    {
+      "name": "leaderboard API accepts a valid entry and rejects a bad name",
+      "ok": true,
+      "detail": {
+        "post": 200,
+        "bad": 400
+      }
+    },
+    {
+      "name": "leaderboard screen lists the saved entry",
+      "ok": true,
+      "detail": "1Mây_011234216:00:00 20/11/2026"
+    },
+    {
+      "name": "--export-leaderboard reads the on-disk board",
+      "ok": true,
+      "detail": {
+        "entries": [
+          {
+            "name": "Mây_01",
+            "score": 1234,
+            "nights_won": 2,
+            "achieved_at": "2026-11-20T16:00:00+07:00",
+            "seed": 99
+          }
+        ]
+      }
+    }
+  ]
+}

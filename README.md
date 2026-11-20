@@ -1,74 +1,79 @@
-# Đảo Đèn Lồng
+# Đảo Đèn Lồng — v1.0.0
 
-> **Video demo:** _(sẽ thêm ở Phase 4)_ · Tài liệu lab: [docs/lab/](docs/lab/LAB-README.md) · Bằng chứng: [docs/proof/](docs/proof/README.md)
+> **Video demo:** _(link sẽ thêm khi quay xong, đính kèm Release v1.0.0)_ · **Release:** [v1.0.0](../../releases/tag/v1.0.0) · Bằng chứng: [docs/proof/](docs/proof/README.md) · Retro: [docs/notes/retro.md](docs/notes/retro.md)
 
-Game 3D góc nhìn thứ ba. Người chơi là Mây, người giữ đèn nhỏ tuổi đội nón lá treo đèn lồng. Mây đi qua **3 Đêm**: Đảo Bến, Đảo Cau (hai đảo nối bằng cầu tre), Đảo Chuông (ba tầng, có gió mạnh). Mỗi đêm Mây gom đom đóm, thắp lại các Đèn Lồng Lớn, né Bóng Mực và Gió Lạc. Thắng Đêm 3 thì tới màn Bình Minh.
+Game 3D góc nhìn thứ ba. Người chơi là **Mây**, người giữ đèn nhỏ tuổi đội nón lá treo đèn lồng. Mây đi qua **3 Đêm**: Đảo Bến, Đảo Cau (hai đảo nối bằng cầu tre), Đảo Chuông (ba tầng, có gió mạnh). Mỗi đêm Mây gom đom đóm, thắp và châm dầu cho các Đèn Lồng Lớn, né **Bóng Mực** (chúng hút dầu đèn) và **Gió Lạc** (chúng cướp đom đóm). Mục tiêu là giữ đảo sáng tới bình minh.
 
-## Cài đặt và chạy (macOS / Linux / Windows, cần Node >= 20)
+![Đảo Đèn Lồng](docs/proof/phase-2/screenshot-night3.png)
 
+## Yêu cầu hệ thống
+- **Node.js ≥ 20** (đã thử với Node 24). macOS, Linux hoặc Windows.
+- Trình duyệt có WebGL2: Chrome, Edge, Firefox hoặc Safari. Lệnh bench cần **Chrome hoặc Chromium**.
+- Đo trên laptop Intel i7-9750H + Intel UHD 630: bench khoảng 105–112 FPS trung bình với 200 Bóng Mực.
+
+## Cài đặt và chạy (2 lệnh)
 ```bash
 npm ci
-npm run dev        # mở http://localhost:5173
+npm start          # build + mở http://localhost:5173 (bảng xếp hạng lưu ở ~/.dao-den-long/leaderboard.json)
 ```
+Không muốn cài gì: tải `dao-den-long-v1.0.0-web.zip` từ [Release](../../releases/tag/v1.0.0), giải nén, rồi chạy `node scripts/serve.mjs`.
 
-## Điều khiển
-| Phím | Hành động |
+## Điều khiển (đổi được trong Cài đặt)
+| Phím mặc định | Hành động |
 |---|---|
 | `W` `A` `S` `D` | Đi (theo hướng camera) |
 | `Space` | Nhảy |
 | `Shift` | Lướt (14 m/s trong 0.2 s, hồi chiêu 1.5 s) |
-| `E` | Nạp đom đóm vào Đèn Lồng Lớn gần nhất (trong 2 m) |
-| `F` / chuột trái | Tỏa sáng: tốn 3 đom đóm, choáng 2 s và đẩy lùi Bóng Mực trong 5 m |
-| Chuột (bấm vào màn hình để khóa chuột) / `←` `→` | Xoay camera |
-| `Esc` / `P` | Tạm dừng (Tiếp tục / Chơi lại Đêm / Cài đặt, gồm "Bảng màu dễ phân biệt" / Về menu) |
+| `E` | Tương tác: nạp đom đóm để thắp đèn, thắp lại, hoặc châm dầu |
+| `F` / chuột trái | Tỏa sáng: tốn 3 đom đóm, choáng và đẩy lùi Bóng Mực trong 5 m |
+| Chuột (bấm vào màn hình để khóa) / `←` `→` | Xoay camera |
+| `Esc` / `P` | Tạm dừng: Tiếp tục / Chơi lại Đêm / Cài đặt / Về menu |
 
-## Luật chơi (số chuẩn Ticket-02)
-- 3 **Ngọn Lửa**, hồi đầy ở đầu mỗi đêm. Bị Bóng Mực chạm thì mất 1, rơi một nửa số đom đóm đang mang ra đất (nhặt lại được trong 8 s), bất tử 1.5 s.
-- Rơi khỏi đảo (xuống biển mây) thì mất 1 Ngọn Lửa và toàn bộ đom đóm, rồi hồi sinh ở điểm xuất phát.
-- Mang tối đa 10 đom đóm. Mỗi đèn cần 10, nạp được nhiều lần. Đèn đã sáng tạo vùng an toàn 6 m.
-- **Gió Lạc** (Đêm 2, 3) cướp 3 đom đóm nếu bạn mang từ 5 con trở lên. Tỏa sáng vào nó để lấy lại.
-- **Bùa Gió** (lá bùa đỏ): trong 10 s chạy 7.2 m/s và lướt không cần hồi chiêu.
-- **Đèn cạn dầu (Ticket-03):** đèn sáng hao 1 dầu/giây và tắt khi hết dầu. Bấm E ở đèn đang sáng để châm dầu (mỗi đom đóm +10 dầu). Đèn từng sáng chỉ cần 5 đom đóm để thắp lại. Khi dầu dưới 30, đèn mất vùng an toàn và Bóng Mực sẽ tới hút dầu.
-- Thời lượng mỗi đêm: 4:00 / 4:30 / 5:00. **Thắng khi tới bình minh còn ít nhất 3/5, 4/6, 5/7 đèn sáng.** Hết Ngọn Lửa hoặc bình minh mà thiếu đèn thì thua, và được chơi lại đêm đó.
-- Sức chứa đom đóm bằng 10 + 2 × số lần thắp thành công trong đêm, tối đa 20.
+**Cài đặt** (được lưu): âm lượng, độ nhạy chuột, **đổi phím** cho mọi hành động (báo khi trùng phím, có nút "Khôi phục mặc định"), **bảng màu dễ phân biệt**, **giảm chuyển động** (tắt rung camera và chớp màn hình), **chữ lớn ×1.25**. Có phụ đề cho các sự kiện: Bóng Mực xuất hiện (kèm mũi tên chỉ hướng ở mép màn hình), gió sắp thổi, 10 giây cuối, đèn sắp cạn dầu.
 
-## Cách tính điểm (Ticket-03)
+## Luật chơi
+- 3 **Ngọn Lửa**, hồi đầy ở đầu mỗi đêm. Bị Bóng Mực chạm thì mất 1 và rơi một nửa số đom đóm đang mang. Rơi khỏi đảo thì mất 1 và mất hết đom đóm.
+- Đèn cần 10 đom đóm để thắp lần đầu, và 5 để thắp lại. Đèn sáng hao **1 dầu/giây**. Châm dầu bằng `E` (mỗi đom đóm +10 dầu). Dầu dưới 30 thì đèn mất vùng an toàn 6 m, và Bóng Mực sẽ tới hút dầu (5/giây).
+- **Thắng khi tới bình minh** (4:00 / 4:30 / 5:00) còn ít nhất **3/5, 4/6, 5/7** đèn sáng. Thua thì được chơi lại đêm đó.
+- Sức chứa đom đóm bằng 10 + 2 × số lần thắp thành công trong đêm, tối đa 20. **Bùa Gió** (lá bùa đỏ): chạy nhanh và lướt không cần hồi chiêu trong 10 s.
+
+## Cách tính điểm
 | Sự kiện | Điểm |
 |---|---|
-| Mỗi đom đóm nạp vào đèn (thắp, thắp lại hoặc châm dầu) | +5 |
+| Mỗi đom đóm nạp vào đèn (thắp, thắp lại, châm dầu) | +5 |
 | Thắp lần đầu / thắp lại | +100 / +40 |
 | Bóng Mực trúng Tỏa Sáng | +5 (+15 nếu nó đang hút dầu) |
 | Bình minh (khi thắng): mỗi đèn đang sáng | +50 + số dầu còn lại (làm tròn xuống) |
 | Bình minh (khi thắng): mỗi Ngọn Lửa còn lại | +50 |
 
-Tổng điểm game là tổng điểm các Đêm đã thắng. Không còn thưởng thời gian.
+Tổng điểm là tổng điểm các Đêm đã thắng. Sau màn Bình Minh, hoặc khi thua, bạn có thể nhập tên để lưu vào **Bảng xếp hạng** top 10 (mở từ menu chính).
 
-## Test Contract v1.2 (headless)
-- Khai báo ở [game.contract.json](game.contract.json). `tuning` lấy từ [src/core/tuning.js](src/core/tuning.js), có test đảm bảo hai nơi khớp nhau. Không trường nào là `null`.
-- `--night` nhận 1, 2, 3. Trạng thái Bóng Mực: `spawning`, `wander`, `chase`, `recoil`, `stunned`, `drain`. Gió Lạc: `idle`, `chase`, `flee`, `removed`.
-- Giả định cho chỗ ticket chưa nói rõ (ví dụ điểm xuất phát Đêm 3 là (0,0,−20) vì (0,0,0) nằm trong tháp chuông) ở [assumptions.md](docs/notes/assumptions.md).
-
+## Test, headless, bench, soak
 ```bash
+npm test                                                     # 52 test (luật v1.0 -> v1.3, chạy qua CLI headless)
 node src/headless/cli.js --seed 1 --night 2 --ticks 3600 --out out.jsonl [--scenario s.json] [--inputs i.json] [--snapshot-every 10]
+npm run build && node scripts/bench.mjs --seed 42 --duration 30 --out bench.json   # cửa sổ Chrome 1280x720, vsync tắt
+node --expose-gc scripts/soak.mjs --seed 7 --nights 10 --out soak.json            # 10 đêm trong 1 tiến trình
+node scripts/serve.mjs --export-leaderboard out.json         # xuất bảng xếp hạng {"entries": [...]}
+node scripts/ui-smoke.mjs                                    # smoke test UI (đổi phím, cài đặt, bảng xếp hạng) qua Chrome
 ```
-
-## Test và bằng chứng
-```bash
-npm test                        # 46 test qua CLI headless (v1.2: luật lõi + Phase 2 + Phase 3)
-bash scripts/proof-phase2.sh    # tính tất định 3 đêm, tốc độ cả đêm, bot, exit code -> docs/proof/phase-2/
-node scripts/fps.mjs            # đo FPS ở 1280x720 (cần build + vite preview :4173)
-```
-Tham số URL: `?auto=1` vào thẳng game, `?night=N`, `?seed=S`, `?lit=K` thắp sẵn K đèn, `?fps=1` hiện FPS.
+- **Test Contract v1.3**: [game.contract.json](game.contract.json) (`build_cmd`, `run_cmd`, `headless_cmd`, `bench_cmd`, `soak_cmd`, `tuning`).
+- **Bench**: game là bản web, nên bench mở một cửa sổ ứng dụng Chrome 1280×720 với `--disable-gpu-vsync --disable-frame-rate-limit` (tức vsync **tắt**). Cảnh bench chuẩn: 200 Bóng Mực, 100 đom đóm, L1–L3 sáng. Camera bay vòng bán kính 30 m, cao 15 m, 15 s một vòng. `peak_mem_mb` là tổng RSS (working set) của mọi tiến trình thuộc phiên Chrome đó. Có thể chỉ định trình duyệt bằng `--chrome <path>` hoặc biến `CHROME_PATH`. Chạy trên CI không có màn hình thì thêm `--headless`.
+- **Soak**: `mem_end_mb` được đo sau khi reset đêm cuối và chờ GC ổn định 1 s. Báo cáo kèm `heap_*_mb` để thấy heap JS không tăng.
+- Kết quả tự đo: [bench.json](bench.json), [soak.json](soak.json).
 
 ## Cấu trúc
-- `src/core/`: logic game thuần, tất định (`sim.js`, `maps.js` 3 bản đồ chuẩn, `tuning.js` số chuẩn)
-- `src/render/`: Three.js (`world.js` dựng đảo), UI và menu (`main.js`), âm thanh tổng hợp WebAudio (`audio.js`)
-- `src/headless/cli.js`: entry point cho Test Contract
-- Thiết kế: [ADR 0001](docs/adr/0001-lantern-fuel-and-dawn-win.md) · [CHANGELOG](CHANGELOG.md)
-- `docs/notes/`: [spec Phase 2](docs/notes/spec-phase2.md), [giả định](docs/notes/assumptions.md), [nhật ký AI](docs/notes/ai-log.md), [retro](docs/notes/retro.md)
-- Harness AI: [AGENTS.md](AGENTS.md), [.claude/settings.json](.claude/settings.json) (hook chặn agent kết thúc khi test đỏ), [CI](.github/workflows/ci.yml) (Ubuntu và macOS), skill [verify-phase](.claude/skills/verify-phase/SKILL.md)
+- `src/core/`: logic thuần, tất định (`sim.js`, `maps.js` 3 bản đồ chuẩn, `tuning.js` số chuẩn, `leaderboard.js`)
+- `src/render/`: Three.js (`world.js`), UI (`main.js`), âm thanh WebAudio (`audio.js`)
+- `src/headless/cli.js`: entry point cho Test Contract. `scripts/`: launcher, bench, soak, fps, smoke test UI, bot, script bằng chứng
+- Thiết kế: [ADR 0001](docs/adr/0001-lantern-fuel-and-dawn-win.md) · [CHANGELOG](CHANGELOG.md) · Tài liệu lab: [docs/lab/](docs/lab/LAB-README.md)
+- Ghi chép: [spec Phase 2](docs/notes/spec-phase2.md), [giả định](docs/notes/assumptions.md), [nhật ký AI](docs/notes/ai-log.md), [retro](docs/notes/retro.md)
+- Harness AI: [AGENTS.md](AGENTS.md) (+ [CLAUDE.md](CLAUDE.md)), hook Stop chặn agent kết thúc khi test đỏ ([.claude/settings.json](.claude/settings.json)), skill [verify-phase](.claude/skills/verify-phase/SKILL.md), [CI](.github/workflows/ci.yml) (Ubuntu và macOS)
 
 ## Sáng tạo của tôi
-- Toàn bộ âm thanh tổng hợp bằng WebAudio (nhạc ngũ cung và hiệu ứng), không dùng file asset.
-- Khăn đỏ của Mây, mắt tím của Bóng Mực, dải lụa uốn lượn của Gió Lạc, lá bay báo gió.
-- Tất cả chỉ là phần hiển thị và âm thanh (`src/render/`), không đổi đầu ra headless: 35 test qua CLI vẫn đạt.
+- Toàn bộ âm thanh tổng hợp bằng WebAudio (nhạc ngũ cung và hiệu ứng), không dùng file asset nào.
+- Lời dẫn của Ông Đăng cho từng đảo, mắt tím của Bóng Mực, dải lụa uốn lượn của Gió Lạc, lá bay báo gió, Bóng Mực trồi lên từ sương khi xuất hiện.
+- Tất cả chỉ nằm ở phần hiển thị (`src/render/`), không đổi đầu ra headless: 52 test qua CLI vẫn đạt. Cảnh bench chỉ dùng thực thể chuẩn.
+
+## Giấy phép
+Mã nguồn: [MIT](LICENSE). Nguồn và công cụ: [CREDITS.md](CREDITS.md).

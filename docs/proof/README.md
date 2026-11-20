@@ -71,3 +71,20 @@ Thiết kế: [ADR 0001](../adr/0001-lantern-fuel-and-dawn-win.md). Thay đổi 
 | Regression Phase 1–2 (các luật không bị thay) | 34 test cũ vẫn chạy; test bị luật mới thay thì sửa hoặc xóa kèm lý do (đầu `tests/contract.test.js`) | `npm test` | Đạt |
 | HUD: đèn sáng/cần, đang mang/sức chứa, nhắc châm dầu | Ảnh | [screenshot-fuel.png](phase-3/screenshot-fuel.png) | Đạt (ảnh) |
 | Thanh dầu, nhấp nháy 1 Hz khi < 30, đèn tắt xẹp và rách, chế độ mù màu được lưu | Code (`src/render/main.js`) | Đèn sáng nằm ngoài khung ảnh, nên ảnh không thấy thanh dầu | **Chưa kiểm chứng**: cần thử tay |
+
+## Phase 4 (Ticket-04, Contract v1.3)
+
+Chạy lại: `npm test` (52), `npm run build && node scripts/bench.mjs --seed 42 --duration 30 --out bench.json`, `node --expose-gc scripts/soak.mjs --seed 7 --nights 10 --out soak.json`, `node scripts/ui-smoke.mjs`.
+Máy tự đo: Windows 11, i7-9750H, Intel UHD 630, 32 GB, Chrome 157 (số tham khảo; máy chấm sẽ quyết định).
+
+| Yêu cầu | Cách kiểm chứng | Bằng chứng | Kết quả |
+|---|---|---|---|
+| Bench: cảnh chuẩn, 1280×720, vsync tắt, khởi động 3 s, đo 30 s, file bench.json đúng định dạng | `bench.mjs`; test `bench scene` (200 Bóng Mực wander, 100 đom đóm, L1–L3 fuel 100, không sát thương, nhặt, hao dầu hay kết thúc) | [bench.json](../../bench.json), [ảnh cảnh bench](phase-4/screenshot-bench-scene.png) | Đạt: avg 112.1, p1-low 56.9, p95 12 ms, load 0.82 s. **Lưu ý:** p1-low dao động 29.5–57 qua 5 lần chạy trên GPU tích hợp |
+| Soak 10 đêm: 0 crash, mem_end ≤ 1.2 × mem_start | `soak.mjs` + test `soak` | [soak.json](../../soak.json) | Đạt: 0 crash, 50.7 → 53.8 MB (1.06×), heap 4.4 → 4.7 MB. Lần đo đầu (khi chưa chờ GC) là 1.24×; xem retro |
+| Bảng xếp hạng: luật tên, sắp xếp, top 10, ISO có múi giờ, lưu đĩa, màn hình, export | Test đơn vị + export; smoke UI (POST → màn hình → export) | test `leaderboard` (3 test), [ui-smoke.json](phase-4/ui-smoke.json) | Đạt |
+| Đổi phím mọi hành động, phát hiện trùng, khôi phục mặc định, được lưu | Smoke UI qua DevTools | [ui-smoke.json](phase-4/ui-smoke.json) | Đạt |
+| Chữ ≥ 18 px ở 1280×720, tùy chọn chữ lớn ×1.25, giảm chuyển động được lưu | Smoke UI (đo cỡ chữ đã tính, kiểm tra sau khi tải lại) | [ui-smoke.json](phase-4/ui-smoke.json) | Đạt |
+| Phụ đề: Bóng Mực xuất hiện + mũi tên, gió, 10 s cuối, đèn < 30 | Code (`src/render/main.js`) | — | **Chưa có bằng chứng tự động**: cần thử tay |
+| Contract v1.3 (bench_cmd, soak_cmd); v1.0–v1.2 giữ nguyên | Test `contract v1.3`, 46 test cũ vẫn đạt | `npm test` | Đạt |
+| Release v1.0.0 chạy được | Chạy thử zip: `node scripts/serve.mjs` → HTTP 200, API bảng xếp hạng | `dao-den-long-v1.0.0-web.zip` (đính kèm Release) | Đạt (thử trên máy này) |
+| Clone sạch, tối đa 3 lệnh | `git clone` → `npm ci` → `npm start` | Xem mục kiểm tra clone sạch bên dưới | Xem bên dưới |

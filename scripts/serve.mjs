@@ -38,7 +38,8 @@ async function ensureBuild() {
   if (args.includes('--no-build')) return;
   let vite;
   try { vite = await import('vite'); } catch { /* release bundle: no vite, use prebuilt dist */ }
-  if (vite) await vite.build({ root: ROOT, logLevel: 'warn' });
+  // build only from a source checkout (release bundles ship a prebuilt dist/ and no index.html at the root)
+  if (vite && existsSync(join(ROOT, 'index.html'))) await vite.build({ root: ROOT, logLevel: 'warn' });
   if (!existsSync(join(DIST, 'index.html'))) { console.error('error: dist/ missing — run `npm ci` first'); process.exit(1); }
 }
 
