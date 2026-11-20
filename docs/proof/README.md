@@ -87,4 +87,4 @@ Máy tự đo: Windows 11, i7-9750H, Intel UHD 630, 32 GB, Chrome 157 (số tham
 | Phụ đề: Bóng Mực xuất hiện + mũi tên, gió, 10 s cuối, đèn < 30 | Code (`src/render/main.js`) | — | **Chưa có bằng chứng tự động**: cần thử tay |
 | Contract v1.3 (bench_cmd, soak_cmd); v1.0–v1.2 giữ nguyên | Test `contract v1.3`, 46 test cũ vẫn đạt | `npm test` | Đạt |
 | Release v1.0.0 chạy được | Chạy thử zip: `node scripts/serve.mjs` → HTTP 200, API bảng xếp hạng | `dao-den-long-v1.0.0-web.zip` (đính kèm Release) | Đạt (thử trên máy này) |
-| Clone sạch, tối đa 3 lệnh | `git clone` → `npm ci` → `npm start` | Xem mục kiểm tra clone sạch bên dưới | Xem bên dưới |
+| Clone sạch, tối đa 3 lệnh | Clone từ GitHub vào thư mục trống → `npm ci` → `npm start` (HTTP 200) → `npm test` (52/52) trên Windows; CI chạy `npm ci` + test + build trên Ubuntu và macOS | Đã chạy thử lúc 2026-11-20 | Đạt (2 lệnh) |
